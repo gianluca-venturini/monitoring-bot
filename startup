@@ -1,0 +1,4 @@
+#!/bin/sh
+
+BASEDIR=$(dirname $0)
+ruby $BASEDIR/monitoring-bot.rb $1 $2
