@@ -10,7 +10,8 @@ component_id = nutella.extract_component_id
 nutella.init(broker, app_id, run_id, component_id)
 
 # Open the resources database
-$applications = nutella.persist.get_json_object_store('applications.json')
+$applications = nutella.persist.get_json_object_store('applications')
+$messages = nutella.persist.get_json_object_store('messages')
 
 puts 'Monitoring bot initialization'
 
@@ -51,17 +52,23 @@ end)
 nutella.net.subscribe('#', lambda do |message, channel, from|
   puts message
   puts channel
-  application = 'application1'
-  instance = 'instance1'
-  component = 'component1'
+  #application = from['app_id']
+  #instance = from['run_id']
+  #component = from['component_id']
+  puts from
+  #puts application, instance, component
 
-  create_if_not_present(application, instance, component)
+  #create_if_not_present(application, instance, component)
 
-  if !($applications[application]['instances'][instance]['components'][component]['publish'].include? channel)
-    $applications[application]['instances'][instance]['components'][component]['publish'].push(channel)
-  end
+  #if !($applications[application]['instances'][instance]['components'][component]['publish'].include? channel)
+  #  $applications[application]['instances'][instance]['components'][component]['publish'].push(channel)
+  #end
 
 end)
+
+# Listen for subscribe
+# Listen for request
+# Listen for handle_request
 
 # Request the list of alert for an application/instance/component
 nutella.net.handle_requests('monitoring/alert', lambda do |request, from|
@@ -114,6 +121,20 @@ def create_if_not_present(application, instance, component)
     }
   end
 end
+
+nutella.net.handle_requests('monitoring/application', lambda do |request, from|
+  apps = []
+  for key in $applications.keys()
+    application = $applications[key]
+    apps.push(application)
+  end
+  {:applications => apps}
+end)
+
+nutella.net.handle_requests('monitoring/message', lambda do |request, from|
+  reply = $messages['messages']
+  {:messages => reply}
+end)
 
 puts 'Initialization completed'
 
