@@ -28,7 +28,7 @@ nutella.net.subscribe('monitoring/alert/add', lambda do |message, from|
   if application != nil
     puts "Subscribed to #{application} with mail #{mail}";
   end
-
+=begin
   if application != nil && instance != nil && component != nil
     if $applications[application]['instances'][instance]['components'][component]['alert'] == nil
       $applications[application]['instances'][instance]['components'][component]['alert'] = []
@@ -45,10 +45,12 @@ nutella.net.subscribe('monitoring/alert/add', lambda do |message, from|
     end
     $applications[application]['alert'].push(mail)
   end
+=end
 
 end)
 
 # Listen for published messages
+=begin
 nutella.net.subscribe('#', lambda do |message, channel, from|
   puts message
   puts channel
@@ -65,6 +67,12 @@ nutella.net.subscribe('#', lambda do |message, channel, from|
   #end
 
 end)
+=end
+
+# Add an alert on a specific application/instance/component
+nutella.net.subscribe('monitoring/alert/remove', lambda do |message, from|
+  puts "Delete alert"
+end)
 
 # Listen for subscribe
 # Listen for request
@@ -79,6 +87,8 @@ nutella.net.handle_requests('monitoring/alert', lambda do |request, from|
 
   alert = nil
 
+=begin
+
   puts $applications['application1']['alert']
   if application != nil && instance != nil && component != nil
     alert = $applications[application]['instances'][instance]['components'][component]['alert']
@@ -87,13 +97,14 @@ nutella.net.handle_requests('monitoring/alert', lambda do |request, from|
   elsif application != nil
     alert = $applications[application]['alert']
   end
+=end
 
 
   if alert == nil
-    alert = []
+    alert = ["dario@uic.edu","andrea@uic.edu"]
   end
 
-  alert
+  {:emails => alert}
 end)
 
 # Create the application structure if it is not present
