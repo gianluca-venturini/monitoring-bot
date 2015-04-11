@@ -28,24 +28,36 @@ nutella.net.subscribe('monitoring/alert/add', lambda do |message, from|
   if application != nil
     puts "Subscribed to #{application} with mail #{mail}";
   end
-=begin
+
   if application != nil && instance != nil && component != nil
-    if $applications[application]['instances'][instance]['components'][component]['alert'] == nil
-      $applications[application]['instances'][instance]['components'][component]['alert'] = []
+    a = $applications[application]
+    if a['instances'][instance]['components'][component]['alert'] == nil
+      a['instances'][instance]['components'][component]['alert'] = []
     end
-    $applications[application]['instances'][instance]['components'][component]['alert'].push(mail)
+    if !a['instances'][instance]['components'][component]['alert'].include? mail
+      a['instances'][instance]['components'][component]['alert'].push(mail)
+    end
+    $applications[application] = a
   elsif application != nil && instance != nil
-    if $applications[application]['instances'][instance]['alert'] == nil
-      $applications[application]['instances'][instance]['alert'] = []
+    a = $applications[application]
+    if a['instances'][instance]['alert'] == nil
+      a['instances'][instance]['alert'] = []
     end
-    $applications[application]['instances'][instance]['alert'].push(mail)
+    if !a['instances'][instance]['alert'].include? mail
+      a['instances'][instance]['alert'].push(mail)
+    end
+    $applications[application] = a
   elsif application != nil
-    if $applications[application]['alert'] == nil
-      $applications[application]['alert'] = []
+    a = $applications[application]
+    if a['alert'] == nil
+      a['alert'] = []
     end
-    $applications[application]['alert'].push(mail)
+    emails = a['alert']
+    if !emails.include? mail
+      emails.push(mail)
+    end
+    $applications[application] = a
   end
-=end
 
 end)
 
@@ -72,6 +84,26 @@ end)
 # Add an alert on a specific application/instance/component
 nutella.net.subscribe('monitoring/alert/remove', lambda do |message, from|
   puts "Delete alert"
+  puts message
+  application = message['application']
+  instance = message['instance']
+  component = message['component']
+  mail = message['mail']
+
+  if application != nil && instance != nil && component != nil
+    a = $applications[application]
+    a['instances'][instance]['components'][component]['alert'] -=[mail]
+    $applications[application] = a
+  elsif application != nil && instance != nil
+    a = $applications[application]
+    a['instances'][instance]['alert'] -= [mail]
+    $applications[application] = a
+  elsif application != nil
+    a = $applications[application]
+    a['alert'] -= [mail]
+    puts a['alert']
+    $applications[application] = a
+  end
 end)
 
 # Listen for subscribe
@@ -87,21 +119,22 @@ nutella.net.handle_requests('monitoring/alert', lambda do |request, from|
 
   alert = nil
 
-=begin
-
-  puts $applications['application1']['alert']
-  if application != nil && instance != nil && component != nil
-    alert = $applications[application]['instances'][instance]['components'][component]['alert']
-  elsif application != nil && instance != nil
-    alert = $applications[application]['instances'][instance]['alert']
-  elsif application != nil
-    alert = $applications[application]['alert']
+  begin
+    if application != nil && instance != nil && component != nil
+      a = $applications[application]
+      alert = a['instances'][instance]['components'][component]['alert']
+    elsif application != nil && instance != nil
+      a = $applications[application]
+      alert = a['instances'][instance]['alert']
+    elsif application != nil
+      a = $applications[application]
+      alert = a['alert']
+    end
+  rescue
   end
-=end
-
 
   if alert == nil
-    alert = ["dario@uic.edu","andrea@uic.edu"]
+    alert = []
   end
 
   {:emails => alert}
@@ -109,28 +142,50 @@ end)
 
 # Create the application structure if it is not present
 def create_if_not_present(application, instance, component)
-  if $applications[application] == nil
-    $applications[application] = {
+
+  a = $applications[application]
+
+  if a == nil
+    a = {
         :name => application,
         :instances => {}
     }
   end
 
-  if instance != nil && $applications[application]['instances'][instance] == nil
-    $applications[application]['instances'][instance] = {
+  begin
+    if instance != nil && a['instances'][instance] == nil
+      a['instances'][instance] = {
+          :name => instance,
+          :components => {}
+      }
+    end
+  rescue
+    a['instances'][instance] = {
         :name => instance,
         :components => {}
     }
   end
 
-  if component != nil && $applications[application]['instances'][instance]['components'][component] == nil
-    $applications[application]['instances'][instance]['components'][component] = {
+  begin
+    if component != nil && instance != nil && a['instances'][instance]['components'][component] == nil
+      a['instances'][instance]['components'][component] = {
+          :publish => [],
+          :subscribe => [],
+          :request => [],
+          :handle_request => []
+      }
+    end
+  rescue
+    a['instances'][instance]['components'][component] = {
         :publish => [],
         :subscribe => [],
         :request => [],
         :handle_request => []
     }
   end
+
+  $applications[application] = a
+
 end
 
 nutella.net.handle_requests('monitoring/application', lambda do |request, from|
