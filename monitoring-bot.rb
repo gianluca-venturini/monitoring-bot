@@ -147,40 +147,40 @@ def create_if_not_present(application, instance, component)
 
   if a == nil
     a = {
-        :name => application,
-        :instances => {}
+        'name' => application,
+        'instances' => {}
     }
   end
 
   begin
     if instance != nil && a['instances'][instance] == nil
       a['instances'][instance] = {
-          :name => instance,
-          :components => {}
+          'name' => instance,
+          'components' => {}
       }
     end
   rescue
     a['instances'][instance] = {
-        :name => instance,
-        :components => {}
+        'name' => instance,
+        'components' => {}
     }
   end
 
   begin
     if component != nil && instance != nil && a['instances'][instance]['components'][component] == nil
       a['instances'][instance]['components'][component] = {
-          :publish => [],
-          :subscribe => [],
-          :request => [],
-          :handle_request => []
+          'publish' => [],
+          'subscribe' => [],
+          'request' => [],
+          'handle_request' => []
       }
     end
   rescue
     a['instances'][instance]['components'][component] = {
-        :publish => [],
-        :subscribe => [],
-        :request => [],
-        :handle_request => []
+        'publish' => [],
+        'subscribe' => [],
+        'request' => [],
+        'handle_request' => []
     }
   end
 
